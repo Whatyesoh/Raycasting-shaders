@@ -6,7 +6,11 @@ io.stdout:setvbuf("no")
 
 function love.load()
 
+    ditheringOn = 1
+    colerShiftOn = 1
+
     speed = 3
+    vertSpeed = 0
 
     wheld = 0
     sheld = 0
@@ -15,8 +19,8 @@ function love.load()
 
     theta = 0
 
-    cameraPos = {0,100.5,0}
-    cameraLook = {0,100.5,-1}
+    cameraPos = {0,20.5,0}
+    cameraLook = {0,20.5,0}
     aspectRatio = 16/9
     imageWidth = 400
     imageHeight = math.floor(imageWidth/aspectRatio)
@@ -43,8 +47,10 @@ function love.load()
 
     rayTracer:send("width",imageWidth)
     rayTracer:send("height",imageHeight)
-    testTexture = love.graphics.newImage("testTexture.png")
-    rayTracer:send("sphereTexture",testTexture)
+    sphereTexture = love.graphics.newImage("earthmap.jpg")
+    quadTexture = love.graphics.newImage("quad.jpg")
+    rayTracer:send("sphereTexture",sphereTexture)
+    rayTracer:send("quadTexture",quadTexture)
 end
 
 function love.keypressed(key) 
@@ -59,6 +65,17 @@ function love.keypressed(key)
     end
     if key == "d" then
         dheld = 1
+    end
+    if key == "space" then
+        if cameraPos[2] == 20.5 then
+            vertSpeed = 5
+        end
+    end
+    if key == "1" then
+        ditheringOn = (ditheringOn - 1) * -1
+    end
+    if key == "2" then
+        colerShiftOn = (colerShiftOn - 1) * -1
     end
 end
 function love.keyreleased(key)
@@ -85,33 +102,34 @@ end
 
 function love.update(dt)
 
-    
+    cameraPos[2] = cameraPos[2] + vertSpeed * dt
+    if cameraPos[2] < 20.5 then
+        vertSpeed = 0
+        cameraPos[2] = 20.5
+    else
+        vertSpeed = vertSpeed - 5 * dt
+    end
 
     if wheld == 1 then
         cameraPos[3] = cameraPos[3] + math.sin(theta) * dt * speed
         cameraPos[1] = cameraPos[1] + math.cos(theta) * dt * speed
-        --cameraLook[3] = cameraPos[3] - 01
     end
     if aheld == 1 then
         cameraPos[3] = cameraPos[3] - math.cos(theta) * dt * speed
         cameraPos[1] = cameraPos[1] + math.sin(theta) * dt * speed
-        --cameraLook[1] = cameraPos[1]
     end
     if sheld == 1 then
         cameraPos[3] = cameraPos[3] - math.sin(theta) * dt * speed
         cameraPos[1] = cameraPos[1] - math.cos(theta) * dt * speed
-        --cameraLook[3] = cameraPos[3] - 01
     end
     if dheld == 1 then
         cameraPos[3] = cameraPos[3] + math.cos(theta) * dt * speed
         cameraPos[1] = cameraPos[1] - math.sin(theta) * dt * speed
-        --cameraLook[1] = cameraPos[1]
     end
-    cameraPos[2] = math.sqrt(math.pow(100,2) - math.pow(cameraPos[1],2) - math.pow(cameraPos[3],2)) + .5
-    cameraLook[1] = cameraPos[1] - math.sin(math.pi * (cameraPos[1]+100)/200) * math.cos(math.pi - theta)
-    cameraLook[2] = cameraPos[2] + math.sin(math.pi * (cameraPos[2]+100)/200) * math.cos(math.pi - theta)
-    cameraLook[3] = cameraPos[3] + math.sin(math.pi * (cameraPos[3]+100)/200) * math.sin(math.pi - theta)
 
+    cameraLook[1] = cameraPos[1] - math.cos(math.pi - theta) 
+    cameraLook[2] = cameraPos[2]
+    cameraLook[3] = cameraPos[3] + math.sin(math.pi - theta) 
 
     rayTracer:send("lookFrom",cameraPos)
     rayTracer:send("lookAt",cameraLook)
@@ -134,8 +152,14 @@ end
 
 function love.draw()
     
-    love.graphics.setShader(colorshift)
-    love.graphics.draw(ditheredCanvas)
+    if colerShiftOn == 1 then
+        love.graphics.setShader(colorshift)
+    end
+    if ditheringOn == 1 then
+        love.graphics.draw(ditheredCanvas)
+    else
+        love.graphics.draw(rayTracedCanvas)
+    end
     love.graphics.setShader()
    
 end
